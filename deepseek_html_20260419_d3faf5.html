@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>媒体中心 - 上传并播放视频和音频</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f5f7fc 0%, #e9eef4 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        /* 主卡片容器 */
+        .dashboard {
+            max-width: 1300px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(2px);
+            border-radius: 2.5rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            padding: 1.8rem 2rem 2.5rem;
+            transition: all 0.2s ease;
+        }
+
+        h1 {
+            font-size: 1.9rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1f2b3c, #2c3e4e);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            letter-spacing: -0.3px;
+            margin-bottom: 0.25rem;
+            display: inline-block;
+        }
+
+        .sub {
+            color: #5b6f82;
+            border-left: 3px solid #3b82f6;
+            padding-left: 12px;
+            margin-top: 8px;
+            margin-bottom: 2rem;
+            font-weight: 450;
+        }
+
+        /* 双栏响应式布局 */
+        .media-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            flex: 1;
+            min-width: 260px;
+            background: #ffffffdd;
+            backdrop-filter: blur(4px);
+            background: white;
+            border-radius: 1.8rem;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 30px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            padding: 1.2rem 1.5rem 0.5rem;
+            border-bottom: 2px solid #eff3f8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .icon {
+            font-size: 1.7rem;
+        }
+
+        /* 上传区域样式 */
+        .upload-area {
+            padding: 1.2rem 1.5rem 1rem;
+            background: #fafcff;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .file-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #f1f5f9;
+            border: 1.5px dashed #94a3b8;
+            border-radius: 2rem;
+            padding: 0.6rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .file-label:hover {
+            background: #e6edf6;
+            border-color: #3b82f6;
+            color: #0f172a;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-info {
+            font-size: 0.75rem;
+            color: #4b5563;
+            margin-top: 8px;
+            text-align: center;
+            word-break: break-all;
+        }
+
+        /* 媒体展示区 */
+        .media-player {
+            padding: 1rem 1.5rem 1.8rem;
+        }
+
+        video, audio {
+            width: 100%;
+            border-radius: 1.2rem;
+            background: #00000010;
+            outline: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        video {
+            max-height: 320px;
+            object-fit: contain;
+            background: #0f172a0c;
+        }
+
+        audio {
+            margin-top: 0.5rem;
+        }
+
+        .placeholder-message {
+            background: #f8fafc;
+            border-radius: 1.2rem;
+            padding: 2rem 1rem;
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+            border: 1px dashed #cbd5e1;
+        }
+
+        .btn-reset {
+            background: none;
+            border: none;
+            font-size: 0.7rem;
+            color: #6c86a3;
+            cursor: pointer;
+            margin-left: 10px;
+            padding: 4px 8px;
+            border-radius: 30px;
+            transition: 0.1s;
+        }
+
+        .btn-reset:hover {
+            background: #eef2f8;
+            color: #dc2626;
+        }
+
+        /* 底部说明 */
+        .footer-note {
+            text-align: center;
+            margin-top: 1.8rem;
+            font-size: 0.75rem;
+            color: #6c86a3;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 1.5rem;
+        }
+
+        @media (max-width: 760px) {
+            .dashboard {
+                padding: 1rem;
+            }
+            .card-header h2 {
+                font-size: 1.3rem;
+            }
+            .media-grid {
+                gap: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap;">
+        <div>
+            <h1>🎬 我的媒体空间</h1>
+            <div class="sub">上传视频 · 上传音频 · 本地播放，隐私安全</div>
+        </div>
+    </div>
+
+    <div class="media-grid">
+        <!-- 视频卡片 -->
+        <div class="card">
+            <div class="card-header">
+                <span class="icon">🎥</span>
+                <h2>视频播放器</h2>
+                <button class="btn-reset" id="resetVideoBtn" title="清除视频">✖ 清除</button>
+            </div>
+            <div class="upload-area">
+                <label class="file-label" for="videoUpload">
+                    📁 选择视频文件 (MP4, WebM, MOV, AVI...)
+                </label>
+                <input type="file" id="videoUpload" accept="video/*">
+                <div id="videoFileName" class="file-info">未上传任何视频</div>
+            </div>
+            <div class="media-player" id="videoPlayerContainer">
+                <!-- 动态显示视频或占位符 -->
+                <div id="videoPlaceholder" class="placeholder-message">
+                    🎞️ 暂无视频 <br> 点击上方按钮上传视频文件
+                </div>
+                <video id="videoPlayer" controls style="display: none; width: 100%;"></video>
+            </div>
+        </div>
+
+        <!-- 音频卡片 -->
+        <div class="card">
+            <div class="card-header">
+                <span class="icon">🎧</span>
+                <h2>音频播放器</h2>
+                <button class="btn-reset" id="resetAudioBtn" title="清除音频">✖ 清除</button>
+            </div>
+            <div class="upload-area">
+                <label class="file-label" for="audioUpload">
+                    🎵 选择音频文件 (MP3, WAV, OGG, M4A...)
+                </label>
+                <input type="file" id="audioUpload" accept="audio/*">
+                <div id="audioFileName" class="file-info">未上传任何音频</div>
+            </div>
+            <div class="media-player" id="audioPlayerContainer">
+                <div id="audioPlaceholder" class="placeholder-message">
+                    🎶 暂无音频 <br> 点击上方按钮上传音频文件
+                </div>
+                <audio id="audioPlayer" controls style="display: none; width: 100%;"></audio>
+            </div>
+        </div>
+    </div>
+    <div class="footer-note">
+        💡 提示：上传的文件仅保存在您当前的浏览器中，不会上传至任何服务器。支持常见视频/音频格式。
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- DOM 元素绑定 ----------
+        // 视频相关
+        const videoUploadInput = document.getElementById('videoUpload');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const videoPlaceholderDiv = document.getElementById('videoPlaceholder');
+        const videoFileNameSpan = document.getElementById('videoFileName');
+        const resetVideoBtn = document.getElementById('resetVideoBtn');
+        
+        // 音频相关
+        const audioUploadInput = document.getElementById('audioUpload');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const audioPlaceholderDiv = document.getElementById('audioPlaceholder');
+        const audioFileNameSpan = document.getElementById('audioFileName');
+        const resetAudioBtn = document.getElementById('resetAudioBtn');
+
+        // ---------- 辅助函数：更新UI显示视频 ----------
+        function displayVideo(file, fileURL) {
+            // 显示video标签，隐藏占位符
+            videoPlayer.style.display = 'block';
+            videoPlaceholderDiv.style.display = 'none';
+            // 设置视频源并加载
+            videoPlayer.src = fileURL;
+            videoPlayer.load();
+            // 可选: 自动播放策略因浏览器而异，为了体验不自动播放，让用户点击播放按钮
+            // 但可以尝试温和地加载
+            // 显示文件名
+            if (file) {
+                videoFileNameSpan.textContent = `📄 ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            } else {
+                videoFileNameSpan.textContent = '已加载视频';
+            }
+        }
+
+        function clearVideo() {
+            // 撤销之前的object URL 避免内存泄漏
+            if (videoPlayer.src && videoPlayer.src.startsWith('blob:')) {
+                URL.revokeObjectURL(videoPlayer.src);
+            }
+            videoPlayer.pause();
+            videoPlayer.removeAttribute('src');
+            videoPlayer.load();  // 重置加载状态
+            videoPlayer.style.display = 'none';
+            videoPlaceholderDiv.style.display = 'flex';  // placeholder默认是block但用了flex占位样式
+            videoPlaceholderDiv.style.display = 'flex';
+            // 重置文件input
+            videoUploadInput.value = '';
+            videoFileNameSpan.textContent = '未上传任何视频';
+            // 额外确保占位文案可见
+            videoPlaceholderDiv.innerHTML = '🎞️ 暂无视频 <br> 点击上方按钮上传视频文件';
+        }
+
+        // 处理视频上传
+        function handleVideoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // 基本校验: 是否为视频类型
+            if (!file.type.startsWith('video/')) {
+                alert('请选择一个有效的视频文件 (例如 mp4, webm, mov 等)');
+                videoUploadInput.value = '';
+                return;
+            }
+            
+            // 限制文件大小 (可选: 限制500MB, 但现代浏览器支持更大，加个友好提醒)
+            const maxSize = 500 * 1024 * 1024; // 500MB
+            if (file.size > maxSize) {
+                alert(`文件过大 (${(file.size / 1024 / 1024).toFixed(2)} MB)，请选择小于500MB的视频文件。`);
+                videoUploadInput.value = '';
+                return;
+            }
+            
+            // 清除之前的视频资源，防止内存泄露
+            if (videoPlayer.src && videoPlayer.src.startsWith('blob:')) {
+                URL.revokeObjectURL(videoPlayer.src);
+            }
+            
+            // 创建本地blob URL
+            const videoURL = URL.createObjectURL(file);
+            // 展示视频
+            displayVideo(file, videoURL);
+        }
+        
+        // ---------- 音频相关逻辑 ----------
+        function displayAudio(file, fileURL) {
+            audioPlayer.style.display = 'block';
+            audioPlaceholderDiv.style.display = 'none';
+            audioPlayer.src = fileURL;
+            audioPlayer.load();
+            if (file) {
+                audioFileNameSpan.textContent = `🎵 ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            } else {
+                audioFileNameSpan.textContent = '已加载音频';
+            }
+        }
+        
+        function clearAudio() {
+            if (audioPlayer.src && audioPlayer.src.startsWith('blob:')) {
+                URL.revokeObjectURL(audioPlayer.src);
+            }
+            audioPlayer.pause();
+            audioPlayer.removeAttribute('src');
+            audioPlayer.load();
+            audioPlayer.style.display = 'none';
+            audioPlaceholderDiv.style.display = 'flex';
+            audioPlaceholderDiv.innerHTML = '🎶 暂无音频 <br> 点击上方按钮上传音频文件';
+            audioUploadInput.value = '';
+            audioFileNameSpan.textContent = '未上传任何音频';
+        }
+        
+        function handleAudioUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('audio/')) {
+                alert('请选择一个有效的音频文件 (例如 mp3, wav, ogg, m4a)');
+                audioUploadInput.value = '';
+                return;
+            }
+            
+            const maxSize = 200 * 1024 * 1024; // 200MB 音频足够
+            if (file.size > maxSize) {
+                alert(`音频文件过大 (${(file.size / 1024 / 1024).toFixed(2)} MB)，请小于200MB。`);
+                audioUploadInput.value = '';
+                return;
+            }
+            
+            if (audioPlayer.src && audioPlayer.src.startsWith('blob:')) {
+                URL.revokeObjectURL(audioPlayer.src);
+            }
+            
+            const audioURL = URL.createObjectURL(file);
+            displayAudio(file, audioURL);
+        }
+        
+        // ----- 重置按钮监听 -----
+        resetVideoBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            clearVideo();
+        });
+        
+        resetAudioBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            clearAudio();
+        });
+        
+        // 上传change监听
+        videoUploadInput.addEventListener('change', handleVideoUpload);
+        audioUploadInput.addEventListener('change', handleAudioUpload);
+        
+        // 可选: 页面关闭前释放所有blob资源，增强稳健性
+        window.addEventListener('beforeunload', () => {
+            if (videoPlayer.src && videoPlayer.src.startsWith('blob:')) {
+                URL.revokeObjectURL(videoPlayer.src);
+            }
+            if (audioPlayer.src && audioPlayer.src.startsWith('blob:')) {
+                URL.revokeObjectURL(audioPlayer.src);
+            }
+        });
+        
+        // 额外处理：如果用户再次上传同一个文件或者新的，旧URL会被清理（已在handle中做）
+        // 调整占位符样式使其更友好，确保初始状态显示正确
+        // 初始时隐藏播放器，显示占位符
+        videoPlayer.style.display = 'none';
+        audioPlayer.style.display = 'none';
+        videoPlaceholderDiv.style.display = 'flex';
+        audioPlaceholderDiv.style.display = 'flex';
+        
+        // 给占位符一些好看的flex居中样式 (已经包含在 .placeholder-message)
+        // 更优雅的显示: 如果音频视频清除后再显示占位符内容没有丢失，clear函数重置innerHTML会保持
+        // 但是clearVideo中重置innerHTML会导致emoji变化，保持一致就行。下面做微调保证一致性。
+        // 解决reset时占位符样式内容被覆盖的问题：已经实现
+        
+        // 额外: 若上传同一种文件多次，刷新blob无泄漏
+        // 边缘情况：用户上传一个视频后，再上传另一个视频，旧的blob在handleVideoUpload最开始被revoke，完美。
+        // 音频同理
+        
+        // 为增强用户体验，添加拖拽上传? 可简化但为了需求稳定，保持核心功能清晰。已经满足“自己upload”
+        // 另外视频支持大多数编码，取决于浏览器，如果遇到无法播放会显示错误，属于正常现象。
+        // 加一个简单样式让音频播放器美观
+        const style = document.createElement('style');
+        style.textContent = `
+            audio {
+                margin-top: 10px;
+                border-radius: 30px;
+            }
+            .placeholder-message {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 140px;
+                background: #f9fbfe;
+                border-radius: 1.2rem;
+            }
+            video {
+                background: #0a0f1a08;
+                border-radius: 1rem;
+            }
+            .btn-reset {
+                transition: all 0.1s;
+            }
+            .btn-reset:hover {
+                background: #fee2e2;
+                transform: scale(0.96);
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // 小优化：当视频加载失败时提示用户可能格式不兼容
+        videoPlayer.addEventListener('error', (e) => {
+            console.warn('视频加载错误', videoPlayer.error);
+            if (videoPlayer.error) {
+                let errorMsg = '视频无法播放，可能是格式不支持或文件损坏。';
+                switch(videoPlayer.error.code) {
+                    case 1: errorMsg = '视频加载被中止。'; break;
+                    case 2: errorMsg = '网络错误，无法加载视频。'; break;
+                    case 3: errorMsg = '视频解码错误，浏览器可能不支持该编码格式。'; break;
+                    case 4: errorMsg = '视频地址无效或格式不支持。'; break;
+                }
+                alert(`视频播放失败: ${errorMsg}`);
+            }
+        });
+        
+        audioPlayer.addEventListener('error', (e) => {
+            console.warn('音频加载错误', audioPlayer.error);
+            if (audioPlayer.error) {
+                let errDesc = '音频无法播放，请尝试转换格式 (推荐MP3或WAV)。';
+                alert(`音频错误: ${errDesc}`);
+            }
+        });
+        
+        // 解决如果上传时某些浏览器自动播放策略不干预即可。
+        // 额外: 为视频和音频添加友好的控制栏完全原生。
+        
+        // 增加一个重置时候清理input值已经做了。另外如果直接清除后重新上传同名文件完全正常。
+        // 支持绝大部分现代浏览器。
+        console.log('初始化完成，媒体上传器已就绪');
+    })();
+</script>
+</body>
+</html>
